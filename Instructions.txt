@@ -1,0 +1,7 @@
+1. Run run_login.py → it prints a URL
+2. You open that URL in browser → login with Zerodha credentials
+3. After login → Zerodha redirects you to a URL like:
+   https://127.0.0.1/?request_token=ABC123&action=login&status=success
+4. Copy that ABC123 part → paste it in terminal
+5. Access token gets saved to access_token.txt
+6. Your main bot reads from that file

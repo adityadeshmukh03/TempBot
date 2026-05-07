@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Trading Bot Control</title>
+    <link rel="stylesheet" href="/static/styles.css">
+  </head>
+  <body>
+    <main class="shell">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">AI Trading Bot</p>
+          <h1>Control Room</h1>
+        </div>
+        <div class="status-pill" id="botStatus">Checking</div>
+      </header>
+
+      <section class="hero-band">
+        <div>
+          <h2 id="modeTitle">Paper Mode Ready</h2>
+          <p id="modeSubtitle">Use paper mode first. Live mode needs a typed confirmation.</p>
+        </div>
+        <div class="actions">
+          <button class="primary" id="startPaper">Start Paper Bot</button>
+          <button class="danger" id="stopBot">Stop Bot</button>
+        </div>
+      </section>
+
+      <section class="grid metrics">
+        <article>
+          <span>Position</span>
+          <strong id="positionText">Flat</strong>
+        </article>
+        <article>
+          <span>Day PnL</span>
+          <strong id="pnlText">0</strong>
+        </article>
+        <article>
+          <span>Instrument</span>
+          <strong id="instrumentText">NIFTY</strong>
+        </article>
+        <article>
+          <span>Safety</span>
+          <strong id="safetyText">Loading</strong>
+        </article>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head">
+          <h2>Model Flow</h2>
+          <span>What the bot does, step by step</span>
+        </div>
+        <div class="flow" id="flowBox"></div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head">
+          <h2>Live Start</h2>
+          <span>Real orders are locked behind confirmation</span>
+        </div>
+        <div class="live-row">
+          <input id="liveConfirm" placeholder="Type LIVE to unlock">
+          <button class="warning" id="startLive">Start Live Bot</button>
+        </div>
+      </section>
+
+      <section class="two-col">
+        <div class="panel">
+          <div class="panel-head">
+            <h2>Open Position</h2>
+            <span>Current saved trade</span>
+          </div>
+          <pre id="positionBox">{}</pre>
+        </div>
+        <div class="panel">
+          <div class="panel-head">
+            <h2>Setup Checklist</h2>
+            <span>Must be green before live</span>
+          </div>
+          <ul class="checklist" id="checklist"></ul>
+        </div>
+      </section>
+
+      <section class="two-col">
+        <div class="panel">
+          <div class="panel-head">
+            <h2>Recent Signals</h2>
+            <span>Last model decisions</span>
+          </div>
+          <div class="table-wrap">
+            <table id="signalsTable"></table>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-head">
+            <h2>Recent Trades</h2>
+            <span>Trade log tail</span>
+          </div>
+          <div class="table-wrap">
+            <table id="tradesTable"></table>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head">
+          <h2>Logs</h2>
+          <select id="logSelect">
+            <option value="runtime">Runtime</option>
+            <option value="errors">Errors</option>
+            <option value="trades">Trades</option>
+            <option value="latency">Latency</option>
+          </select>
+        </div>
+        <pre class="logbox" id="logBox">Loading logs...</pre>
+      </section>
+    </main>
+    <script src="/static/app.js"></script>
+  </body>
+</html>

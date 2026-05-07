@@ -1,0 +1,266 @@
+﻿[
+    {
+        "old":  "backtest\\replay_engine.py",
+        "new":  "replay_engine.py",
+        "bytes":  332,
+        "sha256":  "485B498FB33B972CAFB49531CB9AB49DEC923EF19B816A4071EE4F4F821200F7"
+    },
+    {
+        "old":  "backtest\\__init__.py",
+        "new":  "__init__.py",
+        "bytes":  51,
+        "sha256":  "1D4DB78AB6494413C4DD9FBAA54DA9FE6D7F67ACC4060DE4A1C10DBDE157B165"
+    },
+    {
+        "old":  "core\\analysis_pipeline.py",
+        "new":  "analysis_pipeline.py",
+        "bytes":  265,
+        "sha256":  "E45EC2BC6C7AE5D908D079896002C73BD06B1EB973082AECEA8A5E55E6DFB352"
+    },
+    {
+        "old":  "core\\dependency_container.py",
+        "new":  "dependency_container.py",
+        "bytes":  224,
+        "sha256":  "9839E4987414F87BCD8CE2E60EA29C2A83E1A87A4B253E2A42F0AEE016F1CE83"
+    },
+    {
+        "old":  "core\\engine.py",
+        "new":  "engine.py",
+        "bytes":  667,
+        "sha256":  "1FE43983458D4767333EB594DA571B324039F08859AF4FF6C56DA59A42F2BC86"
+    },
+    {
+        "old":  "core\\execution_engine.py",
+        "new":  "execution_engine.py",
+        "bytes":  1422,
+        "sha256":  "9E22F34A85AFEAB225EEF9A1EC6547496A9ADF73571F965FB853E7D72652C534"
+    },
+    {
+        "old":  "core\\signal_engine.py",
+        "new":  "signal_engine.py",
+        "bytes":  2417,
+        "sha256":  "7998C057EB8EBE23C89EFFB02AB50D7521B067F0CCBD2FDC151844C43DF3A6D2"
+    },
+    {
+        "old":  "core\\signal_pipeline.py",
+        "new":  "signal_pipeline.py",
+        "bytes":  344,
+        "sha256":  "CCD4E5BC508BFC9C4261CBF0D47CC5786E0915F4BC2F9BDED27060AF7BDE1425"
+    },
+    {
+        "old":  "core\\state_engine.py",
+        "new":  "state_engine.py",
+        "bytes":  3289,
+        "sha256":  "7715A29EDCA52F78837BA29CF97EEE2B23B779279EECD3BF3FC7FCEBCE761F94"
+    },
+    {
+        "old":  "core\\trading_engine.py",
+        "new":  "trading_engine.py",
+        "bytes":  1021,
+        "sha256":  "57A2F5B95E28E1807470D24085EB26760ABEB12BF9CBF5CAD2F743CFAE5E2ACC"
+    },
+    {
+        "old":  "core\\__init__.py",
+        "new":  "core___init__.py",
+        "bytes":  71,
+        "sha256":  "3142185366EF33E5DB83F81727D40C2B35F2F6C0E6A009DFB80A02A7F6F4C7CF"
+    },
+    {
+        "old":  "dashboard\\README.md",
+        "new":  "README.md",
+        "bytes":  209,
+        "sha256":  "628D1B116DF37D4DA4D461BCAFFCA854F24AF360364F76BDE485029297EDB583"
+    },
+    {
+        "old":  "deployment\\ai-trading-bot.env.example",
+        "new":  "ai-trading-bot.env.example",
+        "bytes":  237,
+        "sha256":  "CE1B545CCABED611B4E144EAB2916731359E1223D2AA1C6689768F0E1487A74C"
+    },
+    {
+        "old":  "deployment\\trading-bot.service",
+        "new":  "trading-bot.service",
+        "bytes":  434,
+        "sha256":  "E4F348C21200B043502752790F113587E410C25F2FF1DFB43C479BCEFFDAA122"
+    },
+    {
+        "old":  "deployment\\trading-bot.timer",
+        "new":  "trading-bot.timer",
+        "bytes":  178,
+        "sha256":  "EC0BF17F27D58A923747BDCD4FDFCE72AE76F209700C095952BA6DE7453EF28B"
+    },
+    {
+        "old":  "execution\\order_manager.py",
+        "new":  "order_manager.py",
+        "bytes":  10112,
+        "sha256":  "7C08E0F72EF79789664623C96A0E928FE1D780743E0ADCBC29DFD8BFF0BD952A"
+    },
+    {
+        "old":  "execution\\order_sync.py",
+        "new":  "order_sync.py",
+        "bytes":  938,
+        "sha256":  "96BCB0F693581F8948CEED2CE991ED7BEBFD0E8A66C7C3169F28795179851214"
+    },
+    {
+        "old":  "execution\\rejection_handler.py",
+        "new":  "rejection_handler.py",
+        "bytes":  928,
+        "sha256":  "BD1C17EF1B6FF5D1BFC144098DAF3C69ECE4BDA3C97AA814831A64CB345C38B6"
+    },
+    {
+        "old":  "execution\\sl_manager.py",
+        "new":  "sl_manager.py",
+        "bytes":  831,
+        "sha256":  "E33CE51DC68C66712222D6D21CD0EBBEEFB7486D071919ED6AC0A0D4C8E4041B"
+    },
+    {
+        "old":  "execution\\target_manager.py",
+        "new":  "target_manager.py",
+        "bytes":  1080,
+        "sha256":  "DB3C673D63D8B6CB2BF1C5B06991F493FC9644EA75F0604BD7D3F9617F390C43"
+    },
+    {
+        "old":  "execution\\trailing_manager.py",
+        "new":  "trailing_manager.py",
+        "bytes":  1034,
+        "sha256":  "37D600E1E59DBBD4082AAB478097AF0D1286B2DC4B85747CABBA7B56911C42BD"
+    },
+    {
+        "old":  "execution\\__init__.py",
+        "new":  "execution___init__.py",
+        "bytes":  66,
+        "sha256":  "6AE24828E7EC79EA63AE5D91E7CEFD57AF7D5487FBB3598C3AF15EE312CFFFE9"
+    },
+    {
+        "old":  "gui_api\\README.md",
+        "new":  "gui_api_README.md",
+        "bytes":  684,
+        "sha256":  "EB0FA7006A4F3A3D611C17804B2C2395F7D0F80129DE1E08BED9A0F6371472D1"
+    },
+    {
+        "old":  "gui_api\\run_gui.py",
+        "new":  "run_gui.py",
+        "bytes":  334,
+        "sha256":  "C6C7DE3C17025086884E0FE28529537C6DDFED77F25BA6D14C65614128494F0D"
+    },
+    {
+        "old":  "gui_api\\server.py",
+        "new":  "server.py",
+        "bytes":  8623,
+        "sha256":  "DBC1A6B6178DA54CAB5FD06D5556086049ED575431D0E907C255B96793701507"
+    },
+    {
+        "old":  "gui_api\\static\\app.js",
+        "new":  "app.js",
+        "bytes":  4720,
+        "sha256":  "BDC65993EA014C4CCB657EFE5B675953F58C17DCAD9D080D7EA84488078A3F09"
+    },
+    {
+        "old":  "gui_api\\static\\index.html",
+        "new":  "index.html",
+        "bytes":  3652,
+        "sha256":  "F994F304F3440252C4AE5732A9E83D19AACA7C2FFBF94A8FB9C62AFD8347C3B7"
+    },
+    {
+        "old":  "gui_api\\static\\styles.css",
+        "new":  "styles.css",
+        "bytes":  4164,
+        "sha256":  "C0F60623A1FC1FF92153BFAEE33124CF90B16B0B96EE81506D7083207A70EC90"
+    },
+    {
+        "old":  "infra\\config_validation.py",
+        "new":  "config_validation.py",
+        "bytes":  2628,
+        "sha256":  "C2D625F6A5D51CDBD07D62D30AC8D711A4807B93C20AAC2D23C347ECD67725A1"
+    },
+    {
+        "old":  "infra\\health_monitor.py",
+        "new":  "health_monitor.py",
+        "bytes":  2647,
+        "sha256":  "9660C6585D9C12EDF63E0106F1C0EC41EAA80C967D7AF0E93AE045B05C2344D6"
+    },
+    {
+        "old":  "infra\\logging_config.py",
+        "new":  "logging_config.py",
+        "bytes":  981,
+        "sha256":  "FBDBC8FB71279EDB27389C18E1AF0FD1B27CE282DF78165572A7E9C6E9BCAA67"
+    },
+    {
+        "old":  "infra\\ws_manager.py",
+        "new":  "ws_manager.py",
+        "bytes":  1312,
+        "sha256":  "BC40FE40682DA1B5CEF393DB423C2AA0F3E2D3FE510822E085EA2F244AA8A59D"
+    },
+    {
+        "old":  "infra\\__init__.py",
+        "new":  "infra___init__.py",
+        "bytes":  82,
+        "sha256":  "484F57D80710DA41EA47B02E38FFEF16DD8DF3EBB11DCB4C69B21EBA33EB825C"
+    },
+    {
+        "old":  "metrics\\feature_importance.py",
+        "new":  "feature_importance.py",
+        "bytes":  783,
+        "sha256":  "95708A9FE3C14B898BF533651FA5E317B7215A03197AE0469AADD7D75C9525F3"
+    },
+    {
+        "old":  "metrics\\__init__.py",
+        "new":  "metrics___init__.py",
+        "bytes":  47,
+        "sha256":  "9965A92D3E4FD516F0BD579DAA3D1413F6871CFB5D704C3F6361BBE07349234D"
+    },
+    {
+        "old":  "monitoring\\latency.py",
+        "new":  "latency.py",
+        "bytes":  575,
+        "sha256":  "A968C89F4AFC20E5E0B2A8EE84757B54F0BA2978E48BCF020EE4A5273487C67B"
+    },
+    {
+        "old":  "monitoring\\__init__.py",
+        "new":  "monitoring___init__.py",
+        "bytes":  35,
+        "sha256":  "034626F718F9AEC5C6BAD2CA897E72FFA17C9C39789072B7282D920E58455B37"
+    },
+    {
+        "old":  "risk\\kill_switch.py",
+        "new":  "kill_switch.py",
+        "bytes":  1448,
+        "sha256":  "244ABD2B543189A82C88A5C21A6DE9B3E96DEF1929104E59F53E9A33AC8365F5"
+    },
+    {
+        "old":  "risk\\__init__.py",
+        "new":  "risk___init__.py",
+        "bytes":  40,
+        "sha256":  "0BBF0B052F46360B0A4DE57A419708E72D3D16EEFD743987F410A099470A13AE"
+    },
+    {
+        "old":  "tests\\test_execution_managers.py",
+        "new":  "test_execution_managers.py",
+        "bytes":  1176,
+        "sha256":  "A1119201F62EFE2BCF5EE6E481308A889A89FBE2FEB8DC4217FA2178E35DD07F"
+    },
+    {
+        "old":  "tests\\test_gui_api.py",
+        "new":  "test_gui_api.py",
+        "bytes":  625,
+        "sha256":  "6F7E33CA35FEE2B0371846BAC717D30DBA33836C90075FC6E71D2EBD602B9C6E"
+    },
+    {
+        "old":  "tests\\test_order_manager.py",
+        "new":  "test_order_manager.py",
+        "bytes":  1550,
+        "sha256":  "31D871416BD0F4024E3FFA7F89107264A2B7A508286B05F024E49DED2CEECF4B"
+    },
+    {
+        "old":  "tests\\test_position_sizing.py",
+        "new":  "test_position_sizing.py",
+        "bytes":  631,
+        "sha256":  "4BCDF5D9D8EDF2134B280639517F61E6992FDEA5B0B45B5CACDC552B0EE95F78"
+    },
+    {
+        "old":  "tests\\test_state_and_events.py",
+        "new":  "test_state_and_events.py",
+        "bytes":  825,
+        "sha256":  "8A289EF15DFC900152A951631CB4E0B38C326420A0CF61AF942C9750322E17EA"
+    }
+]
