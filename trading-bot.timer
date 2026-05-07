@@ -1,0 +1,10 @@
+[Unit]
+Description=Start AI Options Trading Bot before market open
+
+[Timer]
+OnCalendar=Mon..Fri 09:10
+Persistent=false
+Unit=trading-bot.service
+
+[Install]
+WantedBy=timers.target

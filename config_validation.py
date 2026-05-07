@@ -18,10 +18,13 @@ def validate_config(config) -> list[str]:
         errors.append("ENTRY_ORDER_TYPE must be MARKET or LIMIT")
     if getattr(config, "EXIT_ORDER_TYPE", "MARKET") not in ("MARKET", "LIMIT"):
         errors.append("EXIT_ORDER_TYPE must be MARKET or LIMIT")
-    if getattr(config, "LIVE_MODE", False) and not getattr(config, "ENABLE_SL_ORDER", False):
-        errors.append("ENABLE_SL_ORDER must be True when LIVE_MODE=True")
-    if getattr(config, "LIVE_MODE", False) and not getattr(config, "AUTO_EOD_EXIT", False):
-        errors.append("AUTO_EOD_EXIT must be True when LIVE_MODE=True")
+
+    # Paper mode is gone — SL and EOD exit are always required.
+    if not getattr(config, "ENABLE_SL_ORDER", False):
+        errors.append("ENABLE_SL_ORDER must be True — broker SL-M is mandatory")
+    if not getattr(config, "AUTO_EOD_EXIT", False):
+        errors.append("AUTO_EOD_EXIT must be True — EOD square-off is mandatory")
+
     if float(getattr(config, "ORDER_FILL_TIMEOUT_SECONDS", 0)) <= 0:
         errors.append("ORDER_FILL_TIMEOUT_SECONDS must be positive")
     if float(getattr(config, "ORDER_FILL_POLL_SECONDS", 0)) <= 0:

@@ -4,7 +4,6 @@ from dataclasses import dataclass, asdict
 from datetime import datetime
 from typing import Optional
 import time
-import uuid
 
 import config
 
@@ -32,38 +31,25 @@ class OrderResult:
     error: str = ""
     request: Optional[dict] = None
     timestamp: str = ""
-    paper: bool = True
 
 
 class OrderManager:
     def __init__(self, kite, live_mode: bool = None, logger=None):
         self.kite = kite
-        self.live_mode = bool(getattr(config, "LIVE_MODE", False) if live_mode is None else live_mode)
+        # live_mode param kept for API compat but ignored — always live now
         self.logger = logger
 
     def place_order(self, request: OrderRequest) -> OrderResult:
         request.side = request.side.upper()
         request.order_type = request.order_type.upper()
         request.product = request.product.upper()
+
         if request.quantity <= 0:
             return self._failed(request, "quantity must be positive")
         if request.order_type == "LIMIT" and request.price is None:
             return self._failed(request, "LIMIT order requires price")
         if request.order_type == "SL-M" and request.trigger_price is None:
             return self._failed(request, "SL-M order requires trigger_price")
-
-        if not self.live_mode:
-            fill_price = request.price or request.trigger_price
-            return OrderResult(
-                ok=True,
-                order_id=f"PAPER-{uuid.uuid4().hex[:12]}",
-                status="COMPLETE",
-                filled_quantity=request.quantity,
-                average_price=fill_price,
-                request=asdict(request),
-                timestamp=datetime.now().isoformat(timespec="seconds"),
-                paper=True,
-            )
 
         try:
             kwargs = {
@@ -80,12 +66,15 @@ class OrderManager:
                 kwargs["price"] = request.price
             if request.trigger_price is not None:
                 kwargs["trigger_price"] = request.trigger_price
+
             order_id = self.kite.place_order(**kwargs)
+
             if request.order_type == "SL-M":
                 return self._wait_for_accept(str(order_id), request)
             return self._wait_for_fill(str(order_id), request)
+
         except Exception as exc:
-            return self._failed(request, str(exc), paper=False)
+            return self._failed(request, str(exc))
 
     def place_entry(self, symbol: str, exchange: str, quantity: int,
                     order_type: str = None, price: float = None) -> OrderResult:
@@ -129,10 +118,11 @@ class OrderManager:
     def cancel_order(self, order_id: str) -> bool:
         if not order_id:
             return False
-        if not self.live_mode or order_id.startswith("PAPER-"):
-            return True
         try:
-            self.kite.cancel_order(variety=getattr(self.kite, "VARIETY_REGULAR", "regular"), order_id=order_id)
+            self.kite.cancel_order(
+                variety=getattr(self.kite, "VARIETY_REGULAR", "regular"),
+                order_id=order_id,
+            )
             return True
         except Exception as exc:
             if self.logger:
@@ -142,8 +132,6 @@ class OrderManager:
     def modify_stop_loss(self, order_id: str, trigger_price: float) -> bool:
         if not order_id:
             return False
-        if not self.live_mode or order_id.startswith("PAPER-"):
-            return True
         try:
             self.kite.modify_order(
                 variety=getattr(self.kite, "VARIETY_REGULAR", "regular"),
@@ -157,11 +145,13 @@ class OrderManager:
                 self.logger.exception("modify_stop_loss failed: %s", exc)
             return False
 
+    # ─── PRIVATE POLLING HELPERS ────────────────────────────────────────────
+
     def _wait_for_fill(self, order_id: str, request: OrderRequest) -> OrderResult:
         timeout = float(getattr(config, "ORDER_FILL_TIMEOUT_SECONDS", 10))
-        poll = float(getattr(config, "ORDER_FILL_POLL_SECONDS", 0.5))
+        poll    = float(getattr(config, "ORDER_FILL_POLL_SECONDS", 0.5))
         deadline = time.time() + max(timeout, 0)
-        latest = {}
+        latest: dict = {}
 
         while True:
             try:
@@ -169,7 +159,10 @@ class OrderManager:
                 if history:
                     latest = history[-1]
             except Exception as exc:
-                return self._failed(request, f"order submitted but fill check failed for {order_id}: {exc}", paper=False)
+                return self._failed(
+                    request,
+                    f"order submitted but fill check failed for {order_id}: {exc}",
+                )
 
             status = str(latest.get("status") or "").upper()
             filled = int(latest.get("filled_quantity") or 0)
@@ -186,29 +179,30 @@ class OrderManager:
                     average_price=float(average_price) if average_price is not None else None,
                     request=asdict(request),
                     timestamp=datetime.now().isoformat(timespec="seconds"),
-                    paper=False,
                 )
 
             if status in ("REJECTED", "CANCELLED"):
                 reason = latest.get("status_message") or latest.get("status_message_raw") or status
-                return self._failed(request, f"order {order_id} {status}: {reason}", paper=False)
+                return self._failed(request, f"order {order_id} {status}: {reason}")
 
             if time.time() >= deadline:
-                if request.order_type == "LIMIT" and status in ("OPEN", "TRIGGER PENDING", "VALIDATION PENDING"):
+                if request.order_type == "LIMIT" and status in (
+                    "OPEN", "TRIGGER PENDING", "VALIDATION PENDING"
+                ):
                     self.cancel_order(order_id)
                 return self._failed(
                     request,
-                    f"order {order_id} not filled within {timeout:g}s (status={status or 'UNKNOWN'}, filled={filled})",
-                    paper=False,
+                    f"order {order_id} not filled within {timeout:g}s "
+                    f"(status={status or 'UNKNOWN'}, filled={filled})",
                 )
 
             time.sleep(max(poll, 0.1))
 
     def _wait_for_accept(self, order_id: str, request: OrderRequest) -> OrderResult:
         timeout = float(getattr(config, "ORDER_FILL_TIMEOUT_SECONDS", 10))
-        poll = float(getattr(config, "ORDER_FILL_POLL_SECONDS", 0.5))
+        poll    = float(getattr(config, "ORDER_FILL_POLL_SECONDS", 0.5))
         deadline = time.time() + max(timeout, 0)
-        latest = {}
+        latest: dict = {}
 
         while True:
             try:
@@ -216,7 +210,10 @@ class OrderManager:
                 if history:
                     latest = history[-1]
             except Exception as exc:
-                return self._failed(request, f"order submitted but accept check failed for {order_id}: {exc}", paper=False)
+                return self._failed(
+                    request,
+                    f"order submitted but accept check failed for {order_id}: {exc}",
+                )
 
             status = str(latest.get("status") or "").upper()
             filled = int(latest.get("filled_quantity") or 0)
@@ -233,28 +230,26 @@ class OrderManager:
                     average_price=float(average_price) if average_price is not None else None,
                     request=asdict(request),
                     timestamp=datetime.now().isoformat(timespec="seconds"),
-                    paper=False,
                 )
 
             if status in ("REJECTED", "CANCELLED"):
                 reason = latest.get("status_message") or latest.get("status_message_raw") or status
-                return self._failed(request, f"order {order_id} {status}: {reason}", paper=False)
+                return self._failed(request, f"order {order_id} {status}: {reason}")
 
             if time.time() >= deadline:
                 return self._failed(
                     request,
-                    f"order {order_id} not accepted within {timeout:g}s (status={status or 'UNKNOWN'})",
-                    paper=False,
+                    f"order {order_id} not accepted within {timeout:g}s "
+                    f"(status={status or 'UNKNOWN'})",
                 )
 
             time.sleep(max(poll, 0.1))
 
-    def _failed(self, request: OrderRequest, error: str, paper: bool = True) -> OrderResult:
+    def _failed(self, request: OrderRequest, error: str) -> OrderResult:
         return OrderResult(
             ok=False,
             status="REJECTED",
             error=error,
             request=asdict(request),
             timestamp=datetime.now().isoformat(timespec="seconds"),
-            paper=paper,
         )

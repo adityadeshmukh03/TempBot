@@ -67,15 +67,16 @@ function render(data) {
   const running = data.process.running;
   $("botStatus").textContent = running ? `Running ${data.process.pid}` : "Stopped";
   $("botStatus").className = `status-pill ${running ? "running" : "stopped"}`;
-  $("startPaper").disabled = running;
-  $("startLive").disabled = running;
+  $("startBot").disabled = running;
   $("stopBot").disabled = !running;
 
   const pos = data.open_position || {};
   const risk = data.daily_risk || {};
   const cfg = data.config || {};
-  $("modeTitle").textContent = running ? "Bot Is Running" : "Paper Mode Ready";
-  $("modeSubtitle").textContent = running ? "Watch position, logs, and signals here." : "Start safely in paper mode, then unlock live only when ready.";
+  $("modeTitle").textContent = running ? "Bot Is Running" : "Ready";
+  $("modeSubtitle").textContent = running
+    ? "Watch position, logs, and signals here."
+    : "All orders are live broker orders. Confirm checklist is green before starting.";
   $("positionText").textContent = pos.in_position ? `${pos.symbol || "Open"} ${pos.units || 0}` : "Flat";
   $("pnlText").textContent = money(risk.daily_pnl || 0);
   $("instrumentText").textContent = cfg.instrument || "NIFTY";
@@ -120,24 +121,11 @@ async function refreshLogs() {
   }
 }
 
-$("startPaper").addEventListener("click", async () => {
+$("startBot").addEventListener("click", async () => {
   await api("/api/bot/start", {
     method: "POST",
-    body: JSON.stringify({ live_mode: false, wait_for_market_open: true }),
+    body: JSON.stringify({ wait_for_market_open: true }),
   });
-  await refresh();
-});
-
-$("startLive").addEventListener("click", async () => {
-  await api("/api/bot/start", {
-    method: "POST",
-    body: JSON.stringify({
-      live_mode: true,
-      confirm: $("liveConfirm").value,
-      wait_for_market_open: true,
-    }),
-  });
-  $("liveConfirm").value = "";
   await refresh();
 });
 

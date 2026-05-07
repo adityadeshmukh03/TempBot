@@ -1,4 +1,4 @@
-﻿# main.py
+# main.py
 
 import time
 import threading
@@ -57,7 +57,7 @@ validate_config(config)
 logger = setup_logging(getattr(config, "LOG_DIR", "logs"), level=logging.INFO)
 
 
-# â”€â”€â”€ STARTUP â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# ─── STARTUP ──────────────────────────────────────────────────────────────────
 kite = load_access_token()
 builder = CandleBuilder(interval_minutes=config.CANDLE_INTERVAL)
 state_store = StateStore(getattr(config, "STATE_DB_PATH", "state/bot_state.sqlite"))
@@ -119,7 +119,7 @@ try:
 except Exception as e:
     print(f"[DIRECTION] Bootstrap instrument lookup failed: {e}")
 
-# â”€â”€â”€ ANALYSIS STATE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# ─── ANALYSIS STATE ───────────────────────────────────────────────────────────
 
 
 def fetch_underlying_spot():
@@ -139,20 +139,16 @@ def run_analysis(option_ltp):
         print(f"[API CIRCUIT] {block_reason}")
         return
 
-    # â”€â”€ CIRCUIT BREAKER â€” daily loss limit â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-    # Check this first â€” cheapest possible gate.
+    # ── CIRCUIT BREAKER — daily loss limit ──────────────────────────────────
     if pt.is_circuit_open():
         print(f"[CIRCUIT BREAKER] No new entries today. {pt.get_daily_summary()}")
         return
 
-    # â”€â”€ POSITION GUARD â€” already in a trade â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-    # If we're holding a position, skip analysis entirely.
-    # The bot does not manage exits here â€” that is handled by close_position()
-    # called from your exit logic (manual or automated).
+    # ── POSITION GUARD — already in a trade ─────────────────────────────────
     if pt.is_in_position():
         snap = pt.get_position_snapshot()
         print(
-            f"[POSITION] Already in trade â€” "
+            f"[POSITION] Already in trade — "
             f"{snap['symbol']} @ {snap['entry_price']} "
             f"(entered {snap['entry_time'].strftime('%H:%M') if snap['entry_time'] else '?'}). "
             f"Skipping new signal."
@@ -171,7 +167,7 @@ def run_analysis(option_ltp):
 
     condition = detect_market_condition(indicators)
 
-    # â”€â”€ PASS 1: Cheap filters â€” no API calls needed â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    # ── Pass 1: Cheap filters ────────────────────────────────────────────────
     blocked, filter_reason = run_cheap_filters(
         indicators=indicators,
         candle_count=builder.candle_count()
@@ -180,8 +176,6 @@ def run_analysis(option_ltp):
         print(f"[FILTER BLOCK] {filter_reason}")
         return
 
-    # â”€â”€ Fetch option data (expensive: 3 Kite calls) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-    # â”€â”€ PASS 2: Option-data-dependent filters (IV Rank, expiry day) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     spot_price = fetch_underlying_spot()
     if spot_price is None:
         print("[SPOT] No underlying spot available - skipping analysis")
@@ -224,7 +218,6 @@ def run_analysis(option_ltp):
             )
         return instrument, option_data_for_direction
 
-    # First pass only resolves enough option context to compute the real regime.
     preliminary_direction = detect_direction(
         market_context, indicators, {"hard_block": False}, oi_result
     )
@@ -251,7 +244,6 @@ def run_analysis(option_ltp):
         liquidity=liquidity
     )
 
-    # Final direction is the one used for trading and sees the actual regime.
     direction = detect_direction(market_context, indicators, regime, oi_result)
     if direction is None:
         print("[DIRECTION] Market context mixed or regime blocked - no trade this candle.")
@@ -267,6 +259,7 @@ def run_analysis(option_ltp):
             oi_result=oi_result,
             direction=direction
         )
+        # BUG FIX: reuse existing indicators/oi_result — no extra API calls needed for regime
         regime = detect_regime(
             indicators=indicators,
             market_context=market_context,
@@ -311,10 +304,12 @@ def run_analysis(option_ltp):
     enriched = enrich_with_option_data(indicators, option_data)
     _print_option_summary(option_data)
 
+    # ── Pass 2: Option-data-dependent filters ─────────────────────────────────
     blocked, filter_reason = run_option_filters(option_data=option_data)
     if blocked:
         print(f"[FILTER BLOCK] {filter_reason}")
         return
+
     strategy_edge = evaluate_strategy_edge(
         indicators=indicators,
         market_context=market_context,
@@ -366,12 +361,21 @@ def run_analysis(option_ltp):
         print("[SKIP] Confluence too low - skipping Gemini call")
         return
 
-    key_levels  = _get_underlying_key_levels(market_context, builder.get_key_levels())
+    # BUG FIX: warn explicitly when falling back to option-contract key levels
+    key_levels = _get_underlying_key_levels(market_context, builder.get_key_levels())
+    daily = (market_context or {}).get("daily", {})
+    if not daily.get("pdh") and not daily.get("pdl"):
+        logger.warning(
+            "market_context daily levels unavailable — falling back to candle builder "
+            "key levels (option contract prices, not underlying index). "
+            "PDH/PDL sent to Gemini may be inaccurate."
+        )
+
     recent      = builder.get_recent_candles(count=6)
     option_info = {
-        "symbol":           symbol,
-        "ltp":              option_ltp,
-        "underlying_spot":  spot_price,
+        "symbol":          symbol,
+        "ltp":             option_ltp,
+        "underlying_spot": spot_price,
     }
 
     try:
@@ -403,11 +407,11 @@ def run_analysis(option_ltp):
     if signal:
         execution = analyse_execution_quality(option_data, desired_side="BUY")
         signal = apply_execution_to_signal(signal, execution)
-        signal["execution_quality"] = execution.get("quality", "")
-        signal["spread_pct"] = execution.get("spread_pct", "")
+        signal["execution_quality"]   = execution.get("quality", "")
+        signal["spread_pct"]          = execution.get("spread_pct", "")
         signal["adaptive_adjustment"] = confluence.get("adaptive_adjustment", 0)
-        signal["strategy_edge"] = strategy_edge.get("edge_id", "")
-        signal["direction"] = direction
+        signal["strategy_edge"]       = strategy_edge.get("edge_id", "")
+        signal["direction"]           = direction
 
         sizing = {
             "lots":         0,
@@ -420,8 +424,8 @@ def run_analysis(option_ltp):
         if signal.get("signal") == "ENTER":
             latency_ms = health_monitor.record_latency(signal_started_at, label="signal_cycle")
             if not health_monitor.latency_allows_entry():
-                signal["signal"] = "WAIT"
-                signal["confidence"] = "low"
+                signal["signal"]          = "WAIT"
+                signal["confidence"]      = "low"
                 signal["decision_reason"] = (
                     f"{signal.get('decision_reason', '')} | LATENCY_BLOCK - "
                     f"{latency_ms}ms > {getattr(config, 'MAX_LATENCY_MS', 2500)}ms"
@@ -429,6 +433,7 @@ def run_analysis(option_ltp):
                 _print_signal(signal)
                 log_signal(signal, option_ltp, option_data)
                 return
+
             sizing = calculate_position_size(
                 signal.get("entry_price", 0),
                 signal.get("stop_loss", 0)
@@ -450,8 +455,8 @@ def run_analysis(option_ltp):
                     price=signal["entry_price"] if getattr(config, "ENTRY_ORDER_TYPE", "MARKET") == "LIMIT" else None,
                 )
                 if not entry_order.ok:
-                    signal["signal"] = "WAIT"
-                    signal["confidence"] = "low"
+                    signal["signal"]          = "WAIT"
+                    signal["confidence"]      = "low"
                     signal["decision_reason"] = (
                         f"{signal.get('decision_reason', '')} | ORDER_REJECTED - {entry_order.error}"
                     )
@@ -462,9 +467,6 @@ def run_analysis(option_ltp):
                 fill_price = entry_order.average_price or signal["entry_price"]
                 signal["entry_price"] = fill_price
 
-                # â”€â”€ Register the open position â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-                # Second guard: the is_in_position() check above handles the
-                # common case; this final call is the definitive atomic write.
                 opened = pt.open_position(
                     entry_price=fill_price,
                     stop_loss=signal["stop_loss"],
@@ -475,10 +477,9 @@ def run_analysis(option_ltp):
                     symbol=symbol,
                 )
                 if not opened:
-                    # A duplicate signal slipped through between the top guard
-                    # and here (extremely rare). Block it cleanly.
                     print("[POSITION] Duplicate ENTER blocked by tracker. Skipping.")
                     return
+
                 sl_manager.register(symbol, signal["stop_loss"], sizing["units"])
                 target_manager.register(
                     symbol,
@@ -488,6 +489,7 @@ def run_analysis(option_ltp):
                     getattr(config, "PARTIAL_EXIT_PCT", 0.5),
                 )
                 trailing_manager.register(symbol, fill_price, signal["stop_loss"])
+
                 if getattr(config, "ENABLE_SL_ORDER", False):
                     sl_result = order_manager.place_stop_loss(
                         symbol=symbol,
@@ -499,6 +501,7 @@ def run_analysis(option_ltp):
                         logger.error("SL-M placement failed: %s", sl_result)
                     else:
                         sl_manager.register(symbol, signal["stop_loss"], sizing["units"], order_id=sl_result.order_id)
+
                 state_store.save_open_position(pt.get_position_snapshot())
                 event_bus.publish(EntryEvent(datetime.now(), {"symbol": symbol, "units": sizing["units"]}))
 
@@ -515,14 +518,9 @@ def run_analysis(option_ltp):
         )
 
 
-# â”€â”€â”€ STRUCTURE HELPERS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# ─── STRUCTURE HELPERS ────────────────────────────────────────────────────────
 
 def _get_underlying_key_levels(market_context, fallback_levels):
-    """
-    Prefer underlying PDH/PDL/PDC from market_context.
-    The candle builder tracks the option contract, so its levels are only a
-    fallback when underlying history is unavailable.
-    """
     daily = (market_context or {}).get("daily", {})
     return {
         "PDH": daily.get("pdh") or fallback_levels.get("PDH"),
@@ -531,7 +529,7 @@ def _get_underlying_key_levels(market_context, fallback_levels):
     }
 
 
-# â”€â”€â”€ TERMINAL OUTPUT â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# ─── TERMINAL OUTPUT ──────────────────────────────────────────────────────────
 
 def _print_option_summary(option_data):
     if not option_data:
@@ -580,7 +578,7 @@ def _print_signal(signal):
     print("=========================\n")
 
 
-# â”€â”€â”€ CSV TRADE LOG â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# ─── CSV TRADE LOG ────────────────────────────────────────────────────────────
 
 def log_signal(signal, ltp, option_data=None):
     import csv, os
@@ -641,7 +639,7 @@ def log_signal(signal, ltp, option_data=None):
         ])
 
 
-# â”€â”€â”€ WEBSOCKET CALLBACKS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# ─── WEBSOCKET CALLBACKS ──────────────────────────────────────────────────────
 
 option_ltp = {"value": 0}
 
@@ -658,17 +656,17 @@ def _execute_full_exit(ltp, exit_reason):
     if not pt.is_in_position():
         return False
 
-    snap = pt.get_position_snapshot()
-    symbol = snap.get("symbol")
+    snap           = pt.get_position_snapshot()
+    symbol         = snap.get("symbol")
     state_snapshot = engine_state.snapshot()
-    exchange = (state_snapshot.current_instrument or {}).get(
+    exchange       = (state_snapshot.current_instrument or {}).get(
         "exchange",
         config.INSTRUMENT_EXCHANGE.get(config.INSTRUMENT, "NFO")
     )
-    entry_time = snap.get("entry_time")
-    lots = snap.get("lots", 0)
+    entry_time  = snap.get("entry_time")
+    lots        = snap.get("lots", 0)
     entry_price = snap.get("entry_price")
-    units = snap.get("units", 0)
+    units       = snap.get("units", 0)
 
     if not symbol or not units or not ltp:
         print(f"[EXECUTION BLOCK] Cannot exit {exit_reason}: missing symbol/quantity/ltp")
@@ -708,17 +706,17 @@ def _check_open_position_exit(ltp):
     if not pt.is_in_position():
         return False
 
-    snap = pt.get_position_snapshot()
-    symbol = snap.get("symbol")
+    snap           = pt.get_position_snapshot()
+    symbol         = snap.get("symbol")
     state_snapshot = engine_state.snapshot()
-    exchange = (state_snapshot.current_instrument or {}).get(
+    exchange       = (state_snapshot.current_instrument or {}).get(
         "exchange",
         config.INSTRUMENT_EXCHANGE.get(config.INSTRUMENT, "NFO")
     )
     now_ts = time.time()
     if now_ts - state_snapshot.last_reconcile_at >= getattr(config, "BROKER_RECONCILE_SECONDS", 30):
         engine_state.set_reconcile_time(now_ts)
-        if getattr(config, "LIVE_MODE", False) and symbol:
+        if symbol:
             sync = order_sync.reconcile_symbol(symbol, snap.get("units", 0))
             if not sync.get("in_sync"):
                 health_monitor.record_api_failure("broker_reconcile", "broker/internal mismatch")
@@ -729,10 +727,9 @@ def _check_open_position_exit(ltp):
                     summary = pt.close_position(exit_price=ltp, exit_reason="BROKER_SYNC_EXIT")
                     _save_daily_risk_state()
                     state_store.delete("open_position")
-                    if symbol:
-                        sl_manager.clear(symbol)
-                        target_manager.clear(symbol)
-                        trailing_manager.clear(symbol)
+                    sl_manager.clear(symbol)
+                    target_manager.clear(symbol)
+                    trailing_manager.clear(symbol)
                     if summary and snap.get("entry_time"):
                         log_performance_outcome(
                             entry_time=snap["entry_time"].strftime("%H:%M"),
@@ -755,11 +752,11 @@ def _check_open_position_exit(ltp):
         snap = pt.get_position_snapshot()
         state_store.save_open_position(snap)
 
-    stop_loss = snap.get("stop_loss")
-    target_1 = snap.get("target_1")
-    target_2 = snap.get("target_2")
+    stop_loss   = snap.get("stop_loss")
+    target_1    = snap.get("target_1")
+    target_2    = snap.get("target_2")
     target_mode = getattr(config, "AUTO_EXIT_TARGET", "TARGET_1")
-    units = snap.get("units", 0)
+    units       = snap.get("units", 0)
 
     if getattr(config, "PARTIAL_EXITS_ENABLED", False) and target_mode == "TARGET_2":
         qty_to_exit, partial_reason = target_manager.exit_quantity(symbol, ltp)
@@ -793,7 +790,6 @@ def _check_open_position_exit(ltp):
 
     if (
         exit_reason == "STOP_LOSS"
-        and getattr(config, "LIVE_MODE", False)
         and getattr(config, "ENABLE_SL_ORDER", False)
         and symbol
         and (sl_manager.active.get(symbol) or {}).get("order_id")
@@ -861,8 +857,6 @@ def on_connect(ws, response):
 
 
 def on_close(ws, code, reason):
-    # KiteTicker calls on_close on any disconnect.
-    # We log it here; the reconnect loop in start_ticker() handles recovery.
     health_monitor.record_api_failure("websocket", f"closed code={code} reason={reason}")
     logger.warning("websocket closed code=%s reason=%s", code, reason)
     print(f"[DISCONNECTED] code={code} reason={reason}")
@@ -874,25 +868,9 @@ def on_error(ws, code, reason):
     print(f"[WS ERROR] code={code} reason={reason}")
 
 
-# â”€â”€â”€ RECONNECT LOOP â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# ─── RECONNECT LOOP ───────────────────────────────────────────────────────────
 
 def start_ticker():
-    """
-    Start KiteTicker with exponential-backoff reconnect.
-
-    Retry schedule (WS_RECONNECT_BASE_DELAY doubles each attempt):
-        attempt 1 ->  5 s
-        attempt 2 -> 10 s
-        attempt 3 -> 20 s
-        ... up to WS_RECONNECT_MAX_DELAY (120 s)
-
-    After WS_RECONNECT_MAX_RETRIES consecutive failures the loop exits
-    and the process ends, alerting you to restart manually.
-
-    NOTE: connect(threaded=False) blocks until the socket closes, so when
-    it returns we know a disconnect happened and loop back to reconnect.
-    A clean close (market end) also exits the while-loop via is_market_open().
-    """
     base_delay = config.WS_RECONNECT_BASE_DELAY
     max_delay  = config.WS_RECONNECT_MAX_DELAY
     max_tries  = config.WS_RECONNECT_MAX_RETRIES
@@ -903,14 +881,14 @@ def start_ticker():
         if attempt > max_tries:
             print(
                 f"[WS] {max_tries} consecutive reconnect attempts failed. "
-                f"Giving up â€” please restart the bot manually."
+                f"Giving up — please restart the bot manually."
             )
             break
 
         if attempt > 1:
             delay = min(base_delay * (2 ** (attempt - 2)), max_delay)
             trading_engine.on_reconnect(attempt, "socket reconnect")
-            print(f"[WS] Reconnect attempt {attempt}/{max_tries} â€” waiting {delay}s ...")
+            print(f"[WS] Reconnect attempt {attempt}/{max_tries} — waiting {delay}s ...")
             time.sleep(delay)
 
         try:
@@ -921,10 +899,8 @@ def start_ticker():
             ticker.on_error   = on_error
 
             print(f"[WS] Connecting (attempt {attempt}) ...")
-            ticker.connect(threaded=False)   # blocks until socket closes
+            ticker.connect(threaded=False)
 
-            # Socket closed â€” could be a clean market-end or a mid-session drop.
-            # Reset counter so the next drop is treated as a fresh run.
             print("[WS] Socket closed cleanly. Will reconnect if market still open.")
             attempt = 0
 
@@ -932,12 +908,11 @@ def start_ticker():
             health_monitor.record_api_failure("websocket", exc)
             trading_engine.on_reconnect(attempt, str(exc))
             print(f"[WS] Connection exception on attempt {attempt}: {exc}")
-            # Continue loop; backoff delay applied at top of next iteration.
 
     print("[WS] Reconnect loop exited.")
 
 
-# â”€â”€â”€ MARKET HOURS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# ─── MARKET HOURS ─────────────────────────────────────────────────────────────
 
 def is_market_open():
     now = datetime.now()
@@ -948,7 +923,7 @@ def is_market_open():
     return market_start <= now <= market_end
 
 
-# â”€â”€â”€ ENTRY POINT â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# ─── ENTRY POINT ──────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
     while True:
@@ -962,12 +937,9 @@ if __name__ == "__main__":
 
         print("[STARTING] Bot is live ...")
 
-        # Run the reconnect loop on a background daemon thread so the main
-        # thread can stay alive for the is_market_open() poll loop below.
         ws_thread = threading.Thread(target=start_ticker, daemon=True)
         ws_thread.start()
 
-        # Keep main thread alive while market is open.
         while is_market_open():
             _maybe_eod_exit()
             time.sleep(10)

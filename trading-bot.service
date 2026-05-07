@@ -1,0 +1,20 @@
+[Unit]
+Description=AI Options Trading Bot
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/ai-trading-bot
+ExecStart=/usr/bin/python3 /opt/ai-trading-bot/main.py
+Restart=on-failure
+RestartSec=10
+Environment=PYTHONUNBUFFERED=1
+EnvironmentFile=-/etc/ai-trading-bot.env
+StartLimitIntervalSec=300
+StartLimitBurst=5
+MemoryMax=1G
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target
